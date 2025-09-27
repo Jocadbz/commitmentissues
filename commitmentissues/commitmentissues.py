@@ -7,10 +7,10 @@ import tweepy
 import datetime
 
 # GitHub configuration
-SEARCH_QUERY = 'fuck OR fucking OR bullshit OR shit OR idiot'  # Keywords to search for
+SEARCH_QUERY = 'fuck OR fucking OR bullshit OR shit OR idiot OR damn OR hell OR ass OR crap OR bitch OR bastard OR wtf OR lmao OR rofl'  # Keywords to search for
 
 # File to save state
-STATE_FILE = 'bot_state.json'
+STATE_FILE = os.path.join(os.path.dirname(__file__), 'bot_state.json')
 
 # Set up Twitter API client
 client = tweepy.Client(
@@ -76,16 +76,27 @@ def main():
         for commit in commits:
             commit_sha = commit['sha']
             if commit_sha not in seen_commits:
-                commit_message = f"'{commit['commit']['message']}'\nURL: {commit['html_url']}"
+                commit_message = f"\"{commit['commit']['message']}\" - {commit['commit']['author']['name']}\n{commit['html_url']}"
+                
+                # Truncate tweet if too long (Twitter limit is 280 characters)
+                max_tweet_length = 280
+                if len(commit_message) > max_tweet_length:
+                    # Leave space for '... URL: ' and the URL itself
+                    # Assuming URL is around 50 chars after t.co shortening
+                    # This is a rough estimate, actual shortened URL length can vary
+                    truncation_length = max_tweet_length - len(commit['html_url']) - len('... URL: ')
+                    commit_message = f"'{commit['commit']['message'][:truncation_length].strip()}...\nURL: {commit['html_url']}"
+
                 try:
                     client.create_tweet(text=commit_message)
                     print('Tweet successfully sent!')
                     seen_commits.add(commit_sha)
                     save_state(seen_commits)
                     break  # Exit loop after tweeting one commit
+                except tweepy.TweepyException as e:
+                    print(f"Twitter API error: {e}")
                 except Exception as e:
-                    print(f"Twitter error: {e}")
-                    # Continue to next iteration without adding to seen_commits
+                    print(f"An unexpected error occurred: {e}")
         else:
             print("All new commits have been posted.")
         
