@@ -7,7 +7,7 @@ import tweepy
 import datetime
 
 # GitHub configuration
-SEARCH_QUERY = 'fuck OR fucking OR bullshit OR shit OR idiot OR damn OR hell OR ass OR crap OR bitch OR bastard OR wtf OR lmao OR rofl'  # Keywords to search for
+SEARCH_QUERY_TERMS = ['fuck', 'fucking', 'bullshit', 'shit', 'idiot', 'damn', 'hell', 'ass', 'crap', 'bitch', 'bastard', 'wtf', 'lmao', 'rofl']  # Keywords to search for
 
 # File to save state
 STATE_FILE = os.path.join(os.path.dirname(__file__), 'bot_state.json')
@@ -58,22 +58,33 @@ def main():
     seen_commits = set(state['seen_commits'])
     
     while True:
-        # Get current UTC date and time in ISO 8601 format (e.g., '2023-10-06T12:34:56Z')
         current_datetime = datetime.datetime.now(datetime.UTC).isoformat() + 'Z'
-        # Construct query to include only commits up to the current date/time
-        full_query = f"{SEARCH_QUERY} committer-date:<={current_datetime}"
-        
-        # Fetch commits
-        results = search_commits(full_query)
-        commits = results.get('items', [])
-        
-        if not commits:
+        all_commits = []
+        seen_shas_in_current_cycle = set()
+
+        # Split search terms into chunks of 6 (5 OR operators)
+        for i in range(0, len(SEARCH_QUERY_TERMS), 6):
+            chunk = SEARCH_QUERY_TERMS[i:i+6]
+            query_chunk = ' OR '.join(chunk)
+            full_query = f"{query_chunk} committer-date:<={current_datetime}"
+            
+            # Fetch commits for the current chunk
+            results = search_commits(full_query)
+            commits_for_chunk = results.get('items', [])
+            
+            for commit in commits_for_chunk:
+                commit_sha = commit['sha']
+                if commit_sha not in seen_shas_in_current_cycle:
+                    all_commits.append(commit)
+                    seen_shas_in_current_cycle.add(commit_sha)
+
+        if not all_commits:
             print("No new commits found.")
             time.sleep(43200)  # Sleep for 12 hours
             continue
         
-        # Process the first unseen commit
-        for commit in commits:
+        # Process the first unseen commit from the merged results
+        for commit in all_commits:
             commit_sha = commit['sha']
             if commit_sha not in seen_commits:
                 commit_message = f"\"{commit['commit']['message']}\" - {commit['commit']['author']['name']}\n{commit['html_url']}"
