@@ -7,7 +7,16 @@ import tweepy
 import datetime
 
 # GitHub configuration
-SEARCH_QUERY_TERMS = ['fuck', 'fucking', 'bullshit', 'shit', 'idiot', 'damn', 'hell', 'ass', 'crap', 'bitch', 'bastard', 'wtf', 'lmao', 'rofl']  # Keywords to search for
+SEARCH_QUERY_TERMS = [
+    'fuck', 'fucking', 'bullshit', 'shit', 'idiot', 'damn', 'hell', 'ass', 'crap', 
+    'bitch', 'bastard', 'wtf', 'lmao', 'rofl', 'fml', 'omfg', 'stfu', 'lmfao',
+    'dumbass', 'moron', 'stupid', 'hack', 'hacky', 'ugly', 'terrible', 'horrible',
+    'why does this', 'i hate', 'kill me', 'please work', 'god help', 'pray',
+    'no idea why', 'dont ask', "don't ask", 'sorry', 'forgive me', 'cursed',
+    'abomination', 'nightmare', 'disaster', 'chaos', 'insane', 'crazy',
+    'what the', 'oh god', 'oh no', 'yolo', 'temporary fix', 'todo fix',
+    'fixme', 'broken', 'gave up', 'rage quit'
+]  # Keywords to search for
 
 # File to save state
 STATE_FILE = os.path.join(os.path.dirname(__file__), 'bot_state.json')
